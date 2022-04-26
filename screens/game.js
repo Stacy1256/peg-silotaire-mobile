@@ -6,14 +6,14 @@ import Button from '../components/button';
 const SUPPORT_UKRAINE_SITE_URL = 'https://supportukrainenow.org';
 
 const Game = ({route: {params: {chipStatusMatrix}}}) => {
-    const {chipStatuses, initialRemainderChipCount} = useMemo(() =>
+    const {chipStatuses, initialRemainderChipCount, destinationField} = useMemo(() =>
         createInitialChipStatuses(chipStatusMatrix), []);
     const moves = useMemo(() => [], []);
 
     const [remainderChipCount, setRemainderChipCount] = useState(initialRemainderChipCount);
     const [selectedFieldIndexes, setSelectedFieldIndexes] = useState(null);
 
-    const isVictory = !remainderChipCount;
+    const isVictory = checkIfVictory(remainderChipCount, chipStatuses, destinationField);
 
     const handleFieldClick = (chipStatus, rowIndex, columnIndex) => {
         if (chipStatus == null) {
@@ -70,14 +70,19 @@ const Game = ({route: {params: {chipStatusMatrix}}}) => {
 
 const createInitialChipStatuses = chipStatusMatrix => {
     let initialRemainderChipCount = -1;
-    const chipStatuses = chipStatusMatrix.map(chipStatusRow => chipStatusRow.map(chipStatus => {
+    const destinationField = {};
+    const chipStatuses = chipStatusMatrix.map((chipStatusRow, rowIndex) => chipStatusRow.map((chipStatus, columnIndex) => {
         if (chipStatus) {
             ++initialRemainderChipCount;
+        } else if (chipStatus === false) {
+            destinationField.rowIndex = rowIndex;
+            destinationField.columnIndex = columnIndex;
         }
+
         return chipStatus;
     }));
 
-    return {chipStatuses, initialRemainderChipCount};
+    return {chipStatuses, initialRemainderChipCount, destinationField};
 }
 
 const selectChip = (chipStatuses, rowIndex, columnIndex, setSelectedFieldIndexes) => {
@@ -151,6 +156,9 @@ const saveGetChipStatus = (chipStatuses, rowIndex, columnIndex) => {
         return chipStatusRow[columnIndex];
     }
 }
+
+const checkIfVictory = (remainderChipCount, chipStatuses, destinationField) =>
+    !remainderChipCount && (chipStatuses[destinationField.rowIndex][destinationField.columnIndex] === true)
 
 const openSupportUkraineSite = () => {
     Linking.openURL(SUPPORT_UKRAINE_SITE_URL);
